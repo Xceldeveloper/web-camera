@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- 
+        November 2020
+
+        @xceldeveloper
+     -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera | Designed by Xceldeveloper</title>
+    <link rel="stylesheet" href="materialdesignicons.min.css">
+    <style>
+        body {
+            margin: 0px;
+            background-color: #101010;
+            color: #fff;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        #video-preview {
+            width: 100%;
+            height: 100%;
+            z-index: 80px;
+            display: block;
+
+
+        }
+
+        canvas {
+            display: none;
+        }
+
+        #image-result {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            right: 0px;
+            bottom: 0px;
+            display: none;
+            object-fit: contain;
+            background-color: #000;
+        }
+
+        #video-result {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            right: 0px;
+            bottom: 0px;
+            display: none;
+            background-color: #000;
+        }
+
+        #contriols {
+            width: 100%;
+            max-width: 1000px;
+            height: auto;
+            background-color: transparent;
+            z-index: 90px;
+            position: fixed;
+            display: flex;
+            bottom: 0px;
+        }
+
+        .btn-cover {
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #snap {
+            margin: 10px auto;
+            width: 70px;
+            height: 70px;
+            background-color: transparent;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            outline-style: none;
+            color: #fff;
+            font-size: 40px;
+        }
+
+        #video-duration {
+            display: block;
+            width: 100%;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+            margin: 5px auto;
+            display: none;
+        }
+
+        .flas-btn {
+            flex: 1;
+        }
+
+        #flash-btn,
+        #toggle-cam {
+            border: none;
+            background-color: transparent;
+            color: #fff;
+            font-size: 30px;
+            padding: 5px;
+            margin: 25px auto;
+            outline-style: none;
+            display: block;
+        }
+
+        #flash-btn {
+            display: none;
+        }
+
+        #close {
+            border: none;
+            background-color: transparent;
+            color: #fff;
+            font-size: 30px;
+            outline-style: none;
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 100;
+            display: none;
+        }
+
+        #switch-cam-type {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: none;
+            color: #fff;
+            font-size: 33px;
+            padding: 5px 6px;
+            outline-style: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            border-radius: 50%;
+        }
+
+
+
+
+        @media screen and (min-width: 320px) and (max-width: 767px) and (orientation: landscape) {
+
+            #contriols {
+                width: 100px;
+                height: 100%;
+                flex-direction: column;
+                background-color: transparent;
+                z-index: 90px;
+                position: fixed;
+                display: flex;
+                bottom: 0px;
+                right: 0px;
+            }
+
+
+            #switch-cam-type {
+                background-color: rgba(0, 0, 0, 0.3);
+                border: none;
+                color: #fff;
+                font-size: 33px;
+                padding: 5px 6px;
+                outline-style: none;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                border-radius: 50%;
+            }
+
+        }
+
+
+
+        #download-btn {
+
+            color: #fff;
+            background: transparent;
+            border: none;
+            padding: 10px;
+            outline-style: none;
+            position: fixed;
+            bottom: 30px;
+            display: none;
+            z-index: 100;
+
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <video id="video-preview" autoplay></video>
+
+        <button id="switch-cam-type">
+            <span class="mdi mdi-video"></span>
+        </button>
+        <div id="contriols">
+            <div class="flas-btn">
+                <button id="flash-btn">
+                    <span class="mdi mdi-flash"></span>
+                </button>
+            </div>
+
+            <div class="btn-cover">
+                <button id="snap">
+                    <span class="mdi mdi-camera-iris"></span>
+                </button>
+                <span id="video-duration">recording...</span>
+            </div>
+            <div class="flas-btn">
+                <button id="toggle-cam">
+                    <span class="mdi mdi-camera-retake-outline"></span>
+                </button>
+            </div>
+        </div>
+
+        <button id="close">
+            <span class="mdi mdi-close"></span>
+        </button>
+
+        <a id="download-btn" href="">Download</a>
+
+        <canvas></canvas>
+        <img alt="result" id="image-result">
+        <video autoplay id="video-result"></video>
+    </div>
+
+
+
+    <script>
+        var videoPreview = document.querySelector('#video-preview')
+        var canvas = document.querySelector('canvas')
+        var imageResult = document.querySelector('#image-result')
+        var videoResult = document.querySelector("#video-result")
+        var cameraBTN = document.querySelector('#snap')
+        var togglecamBtn = document.querySelector('#toggle-cam')
+        var toggleFlashBtn = document.getElementById('flash-btn')
+        var closeBtn = document.querySelector('#close')
+        var downloadBtn = document.getElementById('download-btn')
+        var switchCam = document.getElementById('switch-cam-type')
+        var videoDurattionText = document.getElementById('video-duration')
+
+
+
+        var TIME = {
+            max: 5000,
+            elapsed: 0
+        }
+
+        var CAMERA = {
+            pictureMode: true,
+            which: { user: true },
+            flashLight: { ON: false, present: false },
+            constraints: { audio: false, video: { width: { min: 1280, ideal: 1920, max: 2560 }, height: { min: 720, ideal: 1080, max: 1440 } } },
+            stream: null,
+            track: null,
+            recording: false,
+            recorder: null
+        }
+
+        var IMAGE_RESULT; ///image url
+
+
+
+        var constraints = {
+            video: { width: { min: 1280, ideal: 1920, max: 2560 }, height: { min: 720, ideal: 1080, max: 1440 } }
+        }
+
+        function hasGetUserMedia() {
+            return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+        }
+
+
+
+        if (hasGetUserMedia()) {
+            //good to go
+
+            if (CAMERA.pictureMode) {
+                cameraBTN.innerHTML = '<span class="mdi mdi-camera-iris"></span>'
+                switchCam.innerHTML = '<span class="mdi mdi-video"></span>'
+            } else {
+                cameraBTN.innerHTML = '<span class="mdi mdi-video"></span>'
+                switchCam.innerHTML = '<span class="mdi mdi-camera-iris"></span>'
+            }
+
+            initCamera()
+
+        } else {
+            alert('Error Occurred')
+        }
+
+
+
+        switchCam.addEventListener('click', function () {
+            if (CAMERA.pictureMode) {
+                CAMERA.pictureMode = false
+                cameraBTN.innerHTML = '<span class="mdi mdi-video"></span>'
+                switchCam.innerHTML = '<span class="mdi mdi-camera-iris"></span>'
+            } else {
+                CAMERA.pictureMode = true
+                cameraBTN.innerHTML = '<span class="mdi mdi-camera-iris"></span>'
+                switchCam.innerHTML = '<span class="mdi mdi-video"></span>'
+            }
+            initCamera()
+        })
+
+
+
+        cameraBTN.addEventListener('click', function () {
+
+            if (CAMERA.pictureMode) {
+                snapPhoto();
+            } else {
+                if (CAMERA.recording) {
+                    videoDurattionText.style.display = 'none'
+                    CAMERA.recording = false
+                    cameraBTN.innerHTML = '<span class="mdi mdi-video"></span>'
+                    stopRecord()
+                } else {
+                    videoDurattionText.style.display = 'block'
+                    switchCam.style.display = 'none'
+                    togglecamBtn.style.display = 'none'
+                    CAMERA.recording = true
+                    cameraBTN.innerHTML = '<span style="color:red" class="mdi mdi-stop"></span>'
+                    initCamera()
+                }
+            }
+
+
+
+
+        })
+
+
+
+        function snapPhoto() {//take photo
+            canvas.width = videoPreview.videoWidth
+            canvas.height = videoPreview.videoHeight
+            var ctx = canvas.getContext('2d')
+            ctx.drawImage(videoPreview, 0, 0, videoPreview.videoWidth, videoPreview.videoHeight);
+            //     ctx.font = '20pt Calibri';
+            //    ctx.fillText('xceldeveloper.com', 10, 10)
+            //  //   ctx.filter = 'sepia(1)'
+            var dataUrl = canvas.toDataURL('image/jpg');
+            IMAGE_RESULT = dataUrl;
+
+            imageResult.style.display = 'block'
+            closeBtn.style.display = 'block'
+            imageResult.src = dataUrl
+            downloadBtn.style.display = 'block'
+            downloadBtn.href = IMAGE_RESULT
+            downloadBtn.download = 'xceldeveloper_cam' + Date.now()
+
+            initCamera()
+        }
+
+
+        closeBtn.addEventListener('click', function () {
+            imageResult.style.display = 'none'
+            videoResult.style.display = 'none'
+            closeBtn.style.display = 'none'
+            downloadBtn.style.display = 'none'
+
+            CAMERA.recording = false
+            cameraBTN.innerHTML = '<span class="mdi mdi-video"></span>'
+            videoDurattionText.style.display = 'none'
+
+            togglecamBtn.style.display = 'block'
+            initCamera()
+        })
+
+
+        function stopVideoStream() {
+            if (CAMERA.stream) {
+                var trackx = CAMERA.track
+                CAMERA.stream.getTracks().forEach((trackx) => {
+                    CAMERA.track.stop()
+                })
+            }
+        }
+
+
+        async function initCamera() {
+            stopVideoStream()
+            CAMERA.constraints.audio = CAMERA.pictureMode ? false : CAMERA.recording ? true : false
+            CAMERA.constraints.video.facingMode = CAMERA.which.user ? 'user' : 'environment'
+
+            try {
+                CAMERA.stream = await navigator.mediaDevices.getUserMedia(CAMERA.constraints);
+                videoPreview.srcObject = CAMERA.stream
+
+
+                CAMERA.track = CAMERA.stream.getVideoTracks()[0];
+
+                videoPreview.addEventListener('loadedmetadata', function () {
+                    window.setTimeout(function () {
+
+                        initTorch()
+                    }, 500)
+
+                    if (!CAMERA.pictureMode && CAMERA.recording) {// if it's time to record video
+                        recordVideo(videoPreview.captureStream())
+                            .then(recordedChunks => {
+                                let recordedBlob = new Blob(recordedChunks, { type: 'video/webm' })
+                                videoResult.src = URL.createObjectURL(recordedBlob)
+                                downloadBtn.href = videoResult.src
+                                downloadBtn.download = 'xceldeveloper_cam' + Date.now() + '.webm'
+                                CAMERA.recording = false
+
+                                videoResult.style.display = 'block'
+                                downloadBtn.style.display = 'block'
+
+                                closeBtn.style.display = 'block'
+                                console.log('recorded')
+                                initCamera()
+                            })
+                        console.log('recording video...')
+                    }
+                })
+            } catch (err) {
+
+                alert('could not access camera !!!')
+            }
+
+        }
+
+
+
+        togglecamBtn.addEventListener('click', function () {//switch cam with back and front
+            //  isFrontCamera = !isFrontCamera
+            CAMERA.which.user = !CAMERA.which.user
+        })
+
+
+        toggleFlashBtn.addEventListener('click', function () {//toggle flash light
+            CAMERA.flashLight.ON = !CAMERA.flashLight.ON
+
+
+            initCamera()
+        })
+
+        function initTorch() {//for flashlight
+            if (CAMERA.track.getCapabilities()) {
+                CAMERA.flashLight.present = true //it's support torch
+                toggleFlashBtn.style.display = 'block'
+                CAMERA.track.applyConstraints({
+                    advanced: [{ torch: CAMERA.flashLight.ON }]
+                }).catch(e => {
+                    CAMERA.flashLight.present = false
+                    toggleFlashBtn.style.display = 'none'
+                    console.log(e)
+                })
+            }
+
+            if (CAMERA.flashLight.ON) {
+                toggleFlashBtn.innerHTML = '<span class="mdi mdi-flash-off"></span>'
+            } else {
+                toggleFlashBtn.innerHTML = '<span class="mdi mdi-flash"></span>'
+            }
+        }
+
+
+        function recordVideo(streamx, timex) {//record video
+            CAMERA.recorder = new MediaRecorder(streamx);
+            let data = []
+
+            CAMERA.recorder.ondataavailable = eve => data.push(eve.data);
+            CAMERA.recorder.start();
+
+
+            let stopped = new Promise((resolve, reject) => {
+                CAMERA.recorder.onstop = resolve;
+                CAMERA.recorder.onerror = eve => {
+                    reject(event.name)
+                }
+            })
+
+
+            let recorded = wait(TIME.max).then(
+                () => CAMERA.recorder.state == 'recording' && CAMERA.recorder.stop()
+            );
+
+            return Promise.all([
+                stopped,
+                recorded
+            ])
+
+                .then(() => data);
+        }
+
+        function stopRecord() {///still buggy
+            CAMERA.recorder.stop()
+            CAMERA.stream.getTracks().forEach(track => track.stop)
+            console.log('stopped')
+        }
+
+        function wait(delayms) {//delay to stop video record
+            return new Promise(resolve => setTimeout(resolve, delayms))
+        }
+
+
+
+
+    </script>
+</body>
+
+</html>
